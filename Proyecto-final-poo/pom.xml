@@ -8,8 +8,7 @@
   <version>0.0.1-SNAPSHOT</version>
 
   <name>Proyecto-final-poo</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <url>https://github.com/danielcabana-ship-it/Proyecto-Final-POO-Gesti-n-de-jugueter-a</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,12 +28,18 @@
   </dependencyManagement>
 
   <dependencies>
+    <!-- Driver nativo de MariaDB — necesario para que JDBC pueda conectarse a la BD -->
+    <dependency>
+      <groupId>org.mariadb.jdbc</groupId>
+      <artifactId>mariadb-java-client</artifactId>
+      <version>3.1.4</version>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- Optionally: parameterized tests support -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
