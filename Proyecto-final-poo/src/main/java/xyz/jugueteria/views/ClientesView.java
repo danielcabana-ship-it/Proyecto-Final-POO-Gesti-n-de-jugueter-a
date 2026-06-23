@@ -4,10 +4,16 @@ import xyz.jugueteria.dao.ClienteDAO;
 import xyz.jugueteria.models.Cliente;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Pantalla de Gestión de Clientes.
+ * Adaptada al nuevo look & feel oscuro y moderno.
+ */
 public class ClientesView extends JPanel {
 
     private ClienteDAO clienteDAO;
@@ -18,44 +24,72 @@ public class ClientesView extends JPanel {
 
     public ClientesView() {
         clienteDAO = new ClienteDAO();
-        setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setLayout(new BorderLayout(15, 15));
+        
+        // Fondo asfalto para mantener consistencia
+        setBackground(new Color(30, 32, 40)); 
+        setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
 
-        // Título
-        JLabel lblTitle = new JLabel("Gestión de Clientes");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        // Título de la sección
+        JLabel lblTitle = new JLabel("Directorio de Clientes");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblTitle.setForeground(Color.WHITE);
         add(lblTitle, BorderLayout.NORTH);
 
-        // Tabla
+        // --- Tabla de Clientes ---
         tableModel = new DefaultTableModel(new String[]{"ID", "DNI", "Nombre", "Teléfono", "Dirección"}, 0);
         table = new JTable(tableModel);
-        table.setRowHeight(30);
+        table.setRowHeight(35);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        table.setBackground(new Color(40, 42, 54)); 
+        table.setForeground(Color.WHITE);
+        table.setGridColor(new Color(60, 62, 74));
+        table.setShowVerticalLines(false);
+
+        // Cabecera estilizada
+        JTableHeader header = table.getTableHeader();
+        header.setBackground(new Color(0, 122, 255)); // El azul distintivo
+        header.setForeground(Color.WHITE);
+        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        table.setDefaultRenderer(Object.class, centerRenderer);
+
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.getViewport().setBackground(new Color(30, 32, 40));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
         add(scrollPane, BorderLayout.CENTER);
 
-        // Panel de Formulario y Botones
-        JPanel panelBottom = new JPanel(new BorderLayout(10, 10));
+        // --- Formulario de Entrada ---
+        JPanel panelBottom = new JPanel(new BorderLayout(15, 15));
+        panelBottom.setBackground(new Color(30, 32, 40));
         
         JPanel panelForm = new JPanel(new GridLayout(2, 4, 10, 10));
-        txtDni = new JTextField();
-        txtNombre = new JTextField();
-        txtTelefono = new JTextField();
-        txtDireccion = new JTextField();
+        panelForm.setBackground(new Color(30, 32, 40));
 
-        panelForm.add(new JLabel("DNI:"));
-        panelForm.add(new JLabel("Nombre Completo:"));
-        panelForm.add(new JLabel("Teléfono:"));
-        panelForm.add(new JLabel("Dirección:"));
+        txtDni = crearTextFieldOscuro();
+        txtNombre = crearTextFieldOscuro();
+        txtTelefono = crearTextFieldOscuro();
+        txtDireccion = crearTextFieldOscuro();
+
+        panelForm.add(crearLabelBlanco("DNI:"));
+        panelForm.add(crearLabelBlanco("Nombre Completo:"));
+        panelForm.add(crearLabelBlanco("Teléfono:"));
+        panelForm.add(crearLabelBlanco("Dirección:"));
 
         panelForm.add(txtDni);
         panelForm.add(txtNombre);
         panelForm.add(txtTelefono);
         panelForm.add(txtDireccion);
 
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnRefrescar = new JButton("Refrescar");
-        JButton btnAgregar = new JButton("Agregar");
-        JButton btnEliminar = new JButton("Eliminar");
+        // Botones de acción
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        panelBotones.setBackground(new Color(30, 32, 40));
+        
+        JButton btnRefrescar = crearBotonPrimario("Actualizar Lista");
+        JButton btnEliminar = crearBotonPeligro("Borrar Seleccionado");
+        JButton btnAgregar = crearBotonPrimario("Guardar Cliente");
 
         panelBotones.add(btnRefrescar);
         panelBotones.add(btnEliminar);
@@ -66,7 +100,7 @@ public class ClientesView extends JPanel {
 
         add(panelBottom, BorderLayout.SOUTH);
 
-        // Eventos
+        // --- Eventos ---
         btnRefrescar.addActionListener(e -> cargarDatos());
         
         btnAgregar.addActionListener(e -> {
@@ -120,5 +154,43 @@ public class ClientesView extends JPanel {
         txtNombre.setText("");
         txtTelefono.setText("");
         txtDireccion.setText("");
+    }
+    
+    // --- Utilidades visuales reutilizadas ---
+    
+    private JLabel crearLabelBlanco(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setForeground(new Color(200, 200, 200));
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        return lbl;
+    }
+    
+    private JTextField crearTextFieldOscuro() {
+        JTextField txt = new JTextField();
+        txt.setBackground(new Color(40, 42, 54));
+        txt.setForeground(Color.WHITE);
+        txt.setCaretColor(Color.WHITE);
+        txt.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        return txt;
+    }
+    
+    private JButton crearBotonPrimario(String texto) {
+        JButton btn = new JButton(texto);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBackground(new Color(0, 122, 255));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+    
+    private JButton crearBotonPeligro(String texto) {
+        JButton btn = new JButton(texto);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBackground(new Color(255, 85, 85));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 }

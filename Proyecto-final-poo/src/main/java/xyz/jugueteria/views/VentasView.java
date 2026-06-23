@@ -9,11 +9,17 @@ import xyz.jugueteria.models.Producto;
 import xyz.jugueteria.models.Venta;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Pantalla de Punto de Venta (POS).
+ * Totalmente rediseñada con el nuevo estilo oscuro y toques modernos.
+ */
 public class VentasView extends JPanel {
 
     private VentaDAO ventaDAO;
@@ -38,32 +44,42 @@ public class VentasView extends JPanel {
         productoDAO = new ProductoDAO();
         detallesActuales = new ArrayList<>();
 
-        setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setLayout(new BorderLayout(15, 15));
+        
+        // Fondo asfalto para mantener consistencia
+        setBackground(new Color(30, 32, 40));
+        setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
 
-        // Título
+        // Título de la sección
         JLabel lblTitle = new JLabel("Punto de Venta");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblTitle.setForeground(Color.WHITE);
         add(lblTitle, BorderLayout.NORTH);
 
-        // Panel Superior: Selección de Cliente y Producto
-        JPanel panelTop = new JPanel(new GridLayout(2, 1, 10, 10));
+        // --- Panel Superior: Selección de Cliente y Producto ---
+        JPanel panelTop = new JPanel(new GridLayout(2, 1, 10, 15));
+        panelTop.setBackground(new Color(30, 32, 40));
         
-        JPanel panelCliente = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panelCliente.add(new JLabel("Cliente:"));
+        JPanel panelCliente = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        panelCliente.setBackground(new Color(30, 32, 40));
+        panelCliente.add(crearLabelBlanco("Cliente:"));
         cbClientes = new JComboBox<>();
+        cbClientes.setPreferredSize(new Dimension(300, 35));
         panelCliente.add(cbClientes);
         
-        JPanel panelProducto = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panelProducto.add(new JLabel("Producto:"));
+        JPanel panelProducto = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        panelProducto.setBackground(new Color(30, 32, 40));
+        panelProducto.add(crearLabelBlanco("Producto:"));
         cbProductos = new JComboBox<>();
+        cbProductos.setPreferredSize(new Dimension(300, 35));
         panelProducto.add(cbProductos);
         
-        panelProducto.add(new JLabel("Cantidad:"));
-        txtCantidad = new JTextField(5);
+        panelProducto.add(crearLabelBlanco("Cantidad:"));
+        txtCantidad = crearTextFieldOscuro();
+        txtCantidad.setPreferredSize(new Dimension(80, 35));
         panelProducto.add(txtCantidad);
         
-        JButton btnAgregarDetalle = new JButton("Agregar a Venta");
+        JButton btnAgregarDetalle = crearBotonPrimario("Agregar a Venta");
         panelProducto.add(btnAgregarDetalle);
 
         panelTop.add(panelCliente);
@@ -71,31 +87,53 @@ public class VentasView extends JPanel {
         
         add(panelTop, BorderLayout.NORTH);
 
-        // Tabla de Detalles
-        tableModel = new DefaultTableModel(new String[]{"ID Producto", "Producto", "Cantidad", "Precio Unitario", "Subtotal"}, 0);
+        // --- Tabla de Detalles ---
+        tableModel = new DefaultTableModel(new String[]{"ID Producto", "Producto", "Cantidad", "Precio Unit.", "Subtotal"}, 0);
         tableDetalles = new JTable(tableModel);
-        tableDetalles.setRowHeight(30);
+        tableDetalles.setRowHeight(35);
+        tableDetalles.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tableDetalles.setBackground(new Color(40, 42, 54)); 
+        tableDetalles.setForeground(Color.WHITE);
+        tableDetalles.setGridColor(new Color(60, 62, 74));
+        tableDetalles.setShowVerticalLines(false);
+
+        // Cabecera estilizada
+        JTableHeader header = tableDetalles.getTableHeader();
+        header.setBackground(new Color(0, 122, 255));
+        header.setForeground(Color.WHITE);
+        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        tableDetalles.setDefaultRenderer(Object.class, centerRenderer);
+
         JScrollPane scrollPane = new JScrollPane(tableDetalles);
+        scrollPane.getViewport().setBackground(new Color(30, 32, 40));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
         add(scrollPane, BorderLayout.CENTER);
 
-        // Panel Inferior: Total y Botón Finalizar
-        JPanel panelBottom = new JPanel(new BorderLayout(10, 10));
+        // --- Panel Inferior: Total y Botón Finalizar ---
+        JPanel panelBottom = new JPanel(new BorderLayout(15, 15));
+        panelBottom.setBackground(new Color(30, 32, 40));
         
         lblTotal = new JLabel("Total: S/. 0.00");
-        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTotal.setForeground(new Color(80, 250, 123)); // Verde claro
+        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTotal.setForeground(new Color(80, 250, 123)); // Verde claro tipo consola
         
         JButton btnFinalizar = new JButton("Finalizar Venta");
-        btnFinalizar.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnFinalizar.setBackground(new Color(255, 85, 85)); // Rojo suave
-        btnFinalizar.setForeground(Color.WHITE);
+        btnFinalizar.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnFinalizar.setBackground(new Color(80, 250, 123)); // Verde claro
+        btnFinalizar.setForeground(new Color(20, 50, 20)); // Texto verde oscuro
+        btnFinalizar.setFocusPainted(false);
+        btnFinalizar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnFinalizar.setPreferredSize(new Dimension(200, 50));
 
         panelBottom.add(lblTotal, BorderLayout.WEST);
         panelBottom.add(btnFinalizar, BorderLayout.EAST);
 
         add(panelBottom, BorderLayout.SOUTH);
 
-        // Eventos
+        // --- Eventos ---
         btnAgregarDetalle.addActionListener(e -> agregarDetalle());
         btnFinalizar.addActionListener(e -> finalizarVenta());
 
@@ -172,5 +210,33 @@ public class VentasView extends JPanel {
         } else {
             JOptionPane.showMessageDialog(this, "Error al registrar la venta.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+    
+    // --- Utilidades visuales reutilizadas ---
+    
+    private JLabel crearLabelBlanco(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setForeground(new Color(200, 200, 200));
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        return lbl;
+    }
+    
+    private JTextField crearTextFieldOscuro() {
+        JTextField txt = new JTextField();
+        txt.setBackground(new Color(40, 42, 54));
+        txt.setForeground(Color.WHITE);
+        txt.setCaretColor(Color.WHITE);
+        txt.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        return txt;
+    }
+    
+    private JButton crearBotonPrimario(String texto) {
+        JButton btn = new JButton(texto);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBackground(new Color(0, 122, 255));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 }

@@ -1,36 +1,43 @@
 package xyz.jugueteria.main;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import xyz.jugueteria.views.MainView;
+import xyz.jugueteria.views.LoginView;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Este es el punto de entrada de la aplicación. 
- * Básicamente es lo primero que se ejecuta. Aquí le ponemos el traje oscuro (FlatDarkLaf) 
- * y llamamos a la ventana principal para que arranque el show.
+ * Aquí le ponemos el traje oscuro (FlatDarkLaf) y algunas modernizaciones.
  */
 public class Main {
 
     public static void main(String[] args) {
         configurarLookAndFeel();
 
-        // Swing es medio delicado, así que exige que toda la manipulación de la interfaz
-        // ocurra en el Event Dispatch Thread (un hilo especial para UI). Por eso usamos invokeLater.
+        // Esto sirve para que la aplicación no se abra hasta que se logueen.
+        // Iniciamos con la nueva pantalla de Login en lugar de la principal.
         SwingUtilities.invokeLater(() -> {
-            MainView ventana = new MainView();
-            ventana.setVisible(true); // ¡Y se hizo la luz!
+            LoginView ventanaLogin = new LoginView();
+            ventanaLogin.setVisible(true); // ¡Que pase el siguiente!
         });
     }
 
     private static void configurarLookAndFeel() {
         try {
             UIManager.setLookAndFeel(new FlatDarkLaf());
-            UIManager.put("Button.arc", 10);
-            UIManager.put("Component.arc", 10);
-            UIManager.put("TextComponent.arc", 10);
+            
+            // Hacemos que todo sea más redondito para ese look premium
+            UIManager.put("Button.arc", 15);
+            UIManager.put("Component.arc", 15);
+            UIManager.put("TextComponent.arc", 15);
+            UIManager.put("ScrollBar.thumbArc", 999);
+            UIManager.put("ScrollBar.thumbInsets", new Insets(2, 2, 2, 2));
+
+            // Colores por defecto para tablas para que resalten
+            UIManager.put("Table.selectionBackground", new Color(0, 122, 255));
+            UIManager.put("Table.selectionForeground", Color.WHITE);
         } catch (UnsupportedLookAndFeelException e) {
-            // Si por alguna razón el tema falla (que no debería), avisamos y Swing usará el feo por defecto.
             System.err.println("Uy, no se pudo inicializar FlatLaf. Se verá un poco retro con el tema por defecto.");
         }
     }
