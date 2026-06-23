@@ -104,27 +104,186 @@ public class LoginView extends JFrame {
         add(panelIzquierdo, BorderLayout.WEST);
         add(panelDerecho, BorderLayout.CENTER);
 
-        // Aquí es donde validamos el usuario. ¡No toques esta parte sin revisar la tabla!
-        // Para este prompt, es una validación simple.
+        // Aquí es donde validamos el usuario contra la base de datos.
         btnLogin.addActionListener(e -> {
-            String usr = txtUsuario.getText();
+            String usr = txtUsuario.getText().trim();
             String pwd = new String(txtPassword.getPassword());
             
-            // Validación básica para poder probar
-            if (!usr.isEmpty() && !pwd.isEmpty()) {
-                // Login exitoso, abrimos la pantalla principal
+            if (usr.isEmpty() || pwd.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Por favor, ingresa tu usuario/correo y contraseña.", "Campos Vacíos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            xyz.jugueteria.dao.UsuarioDAO usuarioDAO = new xyz.jugueteria.dao.UsuarioDAO();
+            xyz.jugueteria.models.Usuario usuario = usuarioDAO.login(usr, pwd);
+
+            if (usuario != null) {
+                xyz.jugueteria.database.Session.setUsuarioLogueado(usuario);
                 MainView mainView = new MainView();
                 mainView.setVisible(true);
                 this.dispose(); // Cerramos el login
             } else {
-                JOptionPane.showMessageDialog(this, "Por favor, ingresa cualquier usuario y contraseña para entrar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Error de Acceso", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        // Evento secundario
+        // Evento secundario para abrir el registro de nuevo usuario
         btnRegistro.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Función de registro próximamente.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            mostrarDialogoRegistro();
         });
+    }
+
+    // Despliega una tarjeta flotante estilizada en un diálogo modal para crear un nuevo usuario
+    private void mostrarDialogoRegistro() {
+        JDialog dlg = new JDialog(this, "Registrar Nuevo Usuario", true);
+        dlg.setSize(450, 520);
+        dlg.setLocationRelativeTo(this);
+        
+        JPanel pnl = new JPanel(new GridBagLayout());
+        pnl.setBackground(new Color(30, 32, 40)); // Fondo oscuro asfalto
+        pnl.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        // Título del formulario
+        JLabel lblTitle = new JLabel("Crear Cuenta");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitle.setForeground(Color.WHITE);
+        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        pnl.add(lblTitle, gbc);
+        
+        gbc.gridwidth = 1;
+        
+        // Nombre
+        gbc.gridx = 0; gbc.gridy = 1;
+        pnl.add(crearLabelRegistro("Nombre Completo:"), gbc);
+        JTextField txtNombre = crearTextFieldRegistro();
+        gbc.gridx = 1;
+        pnl.add(txtNombre, gbc);
+        
+        // Username
+        gbc.gridx = 0; gbc.gridy = 2;
+        pnl.add(crearLabelRegistro("Nombre de Usuario:"), gbc);
+        JTextField txtRegUsuario = crearTextFieldRegistro();
+        gbc.gridx = 1;
+        pnl.add(txtRegUsuario, gbc);
+        
+        // Email
+        gbc.gridx = 0; gbc.gridy = 3;
+        pnl.add(crearLabelRegistro("Correo Electrónico:"), gbc);
+        JTextField txtEmail = crearTextFieldRegistro();
+        gbc.gridx = 1;
+        pnl.add(txtEmail, gbc);
+        
+        // Password
+        gbc.gridx = 0; gbc.gridy = 4;
+        pnl.add(crearLabelRegistro("Contraseña:"), gbc);
+        JPasswordField txtRegPassword = crearPasswordFieldRegistro();
+        gbc.gridx = 1;
+        pnl.add(txtRegPassword, gbc);
+        
+        // Rol
+        gbc.gridx = 0; gbc.gridy = 5;
+        pnl.add(crearLabelRegistro("Rol de Usuario:"), gbc);
+        String[] roles = {"vendedor", "admin", "auditor"};
+        JComboBox<String> cbRol = new JComboBox<>(roles);
+        cbRol.setPreferredSize(new Dimension(200, 35));
+        cbRol.setBackground(new Color(40, 42, 54));
+        cbRol.setForeground(Color.WHITE);
+        gbc.gridx = 1;
+        pnl.add(cbRol, gbc);
+        
+        // Botones de acción
+        JPanel pnlBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        pnlBotones.setOpaque(false);
+        
+        JButton btnCancelar = new JButton("Cancelar");
+        btnCancelar.setBackground(new Color(70, 70, 70));
+        btnCancelar.setForeground(Color.WHITE);
+        btnCancelar.setFocusPainted(false);
+        btnCancelar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnCancelar.setPreferredSize(new Dimension(100, 35));
+        btnCancelar.addActionListener(e -> dlg.dispose());
+        
+        JButton btnGuardar = new JButton("Registrar");
+        btnGuardar.setBackground(new Color(0, 122, 255)); // Azul
+        btnGuardar.setForeground(Color.WHITE);
+        btnGuardar.setFocusPainted(false);
+        btnGuardar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnGuardar.setPreferredSize(new Dimension(120, 35));
+        
+        pnlBotones.add(btnCancelar);
+        pnlBotones.add(btnGuardar);
+        
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2;
+        gbc.insets = new Insets(20, 8, 8, 8);
+        pnl.add(pnlBotones, gbc);
+        
+        // Lógica de registro
+        btnGuardar.addActionListener(ev -> {
+            String nombre = txtNombre.getText().trim();
+            String username = txtRegUsuario.getText().trim();
+            String email = txtEmail.getText().trim();
+            String password = new String(txtRegPassword.getPassword()).trim();
+            String rol = (String) cbRol.getSelectedItem();
+            
+            if (nombre.isEmpty() || username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(dlg, "Por favor, completa todos los campos.", "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            xyz.jugueteria.dao.UsuarioDAO usuarioDAO = new xyz.jugueteria.dao.UsuarioDAO();
+            
+            if (usuarioDAO.usernameExiste(username)) {
+                JOptionPane.showMessageDialog(dlg, "El nombre de usuario ya está registrado.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (usuarioDAO.emailExiste(email)) {
+                JOptionPane.showMessageDialog(dlg, "El correo electrónico ya está registrado.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            xyz.jugueteria.models.Usuario nuevoUsuario = new xyz.jugueteria.models.Usuario(0, nombre, username, email, password, rol);
+            if (usuarioDAO.registrarUsuario(nuevoUsuario)) {
+                JOptionPane.showMessageDialog(this, "¡Usuario creado correctamente! Ya puedes iniciar sesión.", "Registro Exitoso", JOptionPane.INFORMATION_MESSAGE);
+                dlg.dispose();
+            } else {
+                JOptionPane.showMessageDialog(dlg, "Error al crear el usuario. Inténtalo de nuevo.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        dlg.add(pnl);
+        dlg.setVisible(true);
+    }
+    
+    private JLabel crearLabelRegistro(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setForeground(new Color(200, 200, 200));
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        return lbl;
+    }
+    
+    private JTextField crearTextFieldRegistro() {
+        JTextField txt = new JTextField();
+        txt.setPreferredSize(new Dimension(200, 35));
+        txt.setBackground(new Color(40, 42, 54));
+        txt.setForeground(Color.WHITE);
+        txt.setCaretColor(Color.WHITE);
+        txt.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        return txt;
+    }
+    
+    private JPasswordField crearPasswordFieldRegistro() {
+        JPasswordField txt = new JPasswordField();
+        txt.setPreferredSize(new Dimension(200, 35));
+        txt.setBackground(new Color(40, 42, 54));
+        txt.setForeground(Color.WHITE);
+        txt.setCaretColor(Color.WHITE);
+        txt.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        return txt;
     }
 
     // Pequeño método de ayuda para que el texto de las etiquetas se vea bonito y alineado

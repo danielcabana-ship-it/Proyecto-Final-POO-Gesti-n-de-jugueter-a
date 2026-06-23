@@ -22,7 +22,7 @@ public class VentaDAO {
      * Si algún paso falla se hace rollback completo para evitar datos huérfanos.
      */
     public boolean registrarVentaCompleta(Venta venta, List<DetalleVenta> detalles) {
-        String sqlVenta   = "INSERT INTO ventas (id_cliente, total) VALUES (?, ?)";
+        String sqlVenta   = "INSERT INTO ventas (id_cliente, id_usuario, total) VALUES (?, ?, ?)";
         String sqlDetalle = "INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";
         String sqlStock   = "UPDATE productos SET stock = stock - ? WHERE codigo = ?";
 
@@ -72,6 +72,7 @@ public class VentaDAO {
                 Venta v = new Venta();
                 v.setIdVenta(rs.getInt("id_venta"));
                 v.setIdCliente(rs.getInt("id_cliente"));
+                v.setIdUsuario(rs.getInt("id_usuario"));
                 v.setFechaVenta(rs.getTimestamp("fecha_venta"));
                 v.setTotal(rs.getDouble("total"));
                 lista.add(v);
@@ -90,7 +91,8 @@ public class VentaDAO {
     private int insertarCabecera(Connection con, String sql, Venta venta) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, venta.getIdCliente());
-            ps.setDouble(2, venta.getTotal());
+            ps.setInt(2, venta.getIdUsuario());
+            ps.setDouble(3, venta.getTotal());
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {

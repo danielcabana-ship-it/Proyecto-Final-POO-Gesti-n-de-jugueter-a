@@ -7,6 +7,7 @@ import xyz.jugueteria.models.Cliente;
 import xyz.jugueteria.models.DetalleVenta;
 import xyz.jugueteria.models.Producto;
 import xyz.jugueteria.models.Venta;
+import xyz.jugueteria.database.Session;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -197,6 +198,11 @@ public class VentasView extends JPanel {
 
         Venta venta = new Venta();
         venta.setIdCliente(cliente.getIdCliente());
+        if (Session.isLogueado()) {
+            venta.setIdUsuario(Session.getUsuarioLogueado().getIdUsuario());
+        } else {
+            venta.setIdUsuario(1); // default / fallback
+        }
         venta.setTotal(totalVenta);
 
         if (ventaDAO.registrarVentaCompleta(venta, detallesActuales)) {

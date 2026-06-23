@@ -2,6 +2,8 @@ package xyz.jugueteria.views;
 
 import javax.swing.*;
 import java.awt.*;
+import xyz.jugueteria.database.Session;
+import xyz.jugueteria.models.Usuario;
 
 /**
  * La ventana principal de nuestra juguetería.
@@ -31,6 +33,19 @@ public class MainView extends JFrame {
         JLabel lblTitle = new JLabel("<html><h2 style='color:#1E1E1E;text-align:center;'>Toy Store</h2></html>");
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         sidebar.add(lblTitle);
+
+        // Mostrar usuario logueado en la barra lateral
+        JLabel lblUser = new JLabel();
+        lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblUser.setForeground(new Color(80, 80, 80));
+        lblUser.setHorizontalAlignment(SwingConstants.CENTER);
+        if (Session.isLogueado()) {
+            Usuario u = Session.getUsuarioLogueado();
+            lblUser.setText("<html><center>👤 " + u.getNombre() + "<br><small style='color:#888888;'>(" + u.getRol() + ")</small></center></html>");
+        } else {
+            lblUser.setText("<html><center>👤 Invitado</center></html>");
+        }
+        sidebar.add(lblUser);
 
         JButton btnProductos = createMenuButton("📦 Productos");
         JButton btnClientes = createMenuButton("👥 Clientes");
@@ -76,6 +91,7 @@ public class MainView extends JFrame {
         btnSalir.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "¿Seguro que quieres salir?", "Cerrar Sesión", JOptionPane.YES_NO_OPTION);
             if(confirm == JOptionPane.YES_OPTION) {
+                Session.logout();
                 new LoginView().setVisible(true);
                 this.dispose();
             }

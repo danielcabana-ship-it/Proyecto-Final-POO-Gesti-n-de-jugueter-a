@@ -5,14 +5,16 @@ import java.sql.Timestamp;
 public class Venta {
     private int idVenta;
     private int idCliente;
+    private int idUsuario;
     private Timestamp fechaVenta;
     private double total;
 
     public Venta() {}
 
-    public Venta(int idVenta, int idCliente, Timestamp fechaVenta, double total) {
+    public Venta(int idVenta, int idCliente, int idUsuario, Timestamp fechaVenta, double total) {
         this.idVenta = idVenta;
         this.idCliente = idCliente;
+        this.idUsuario = idUsuario;
         this.fechaVenta = fechaVenta;
         this.total = total;
     }
@@ -31,6 +33,14 @@ public class Venta {
 
     public void setIdCliente(int idCliente) {
         this.idCliente = idCliente;
+    }
+
+    public int getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(int idUsuario) {
+        this.idUsuario = idUsuario;
     }
 
     public Timestamp getFechaVenta() {

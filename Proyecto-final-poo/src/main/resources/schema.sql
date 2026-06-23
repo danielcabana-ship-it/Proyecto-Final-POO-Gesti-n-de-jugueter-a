@@ -3,6 +3,7 @@
 -- =============================================================================
 -- Ejecutar este archivo en MariaDB para preparar el entorno de datos.
 -- Autor: Proyecto Final POO - Gestión de Juguetería
+-- =============================================================================
 
 DROP DATABASE IF EXISTS proyecto_finall_POO;
 
@@ -41,7 +42,9 @@ CREATE TABLE productos (
 CREATE TABLE usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre     VARCHAR(100) NOT NULL,
+    username   VARCHAR(50)  NOT NULL UNIQUE,
     email      VARCHAR(100) NOT NULL UNIQUE,
+    password   VARCHAR(256) NOT NULL,
     rol        VARCHAR(50)  NOT NULL DEFAULT 'vendedor' CHECK (rol IN ('admin', 'vendedor', 'auditor'))
 ) ENGINE=InnoDB;
 
@@ -60,11 +63,14 @@ CREATE TABLE clientes (
 -- 5. Tabla: ventas
 -- -----------------------------------------------------------------------------
 CREATE TABLE ventas (
-    id_venta   INT AUTO_INCREMENT PRIMARY KEY,
-    id_cliente INT            NOT NULL,
+    id_venta    INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente  INT            NOT NULL,
+    id_usuario  INT            NOT NULL,
     fecha_venta DATETIME      DEFAULT CURRENT_TIMESTAMP,
-    total      DECIMAL(10, 2) NOT NULL CHECK (total >= 0),
+    total       DECIMAL(10, 2) NOT NULL CHECK (total >= 0),
     FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
@@ -88,8 +94,7 @@ CREATE TABLE detalle_ventas (
 -- DATOS SEMILLA (necesarios para que la aplicación funcione desde el inicio)
 -- =============================================================================
 
--- Categorías base: sin al menos 1 categoría no se puede registrar ningún producto
--- porque la tabla productos tiene FK a categorias.
+-- Categorías base
 INSERT INTO categorias (nombre, descripcion) VALUES
     ('Acción',        'Figuras de acción, superhéroes y personajes de fantasía'),
     ('Educativos',    'Juguetes que estimulan el aprendizaje y la creatividad'),
@@ -98,6 +103,7 @@ INSERT INTO categorias (nombre, descripcion) VALUES
     ('Peluches',      'Muñecos de tela, animales de peluche y almohadas'),
     ('Juegos de mesa','Ajedrez, parchís, dominó y juegos de estrategia');
 
--- Usuario administrador por defecto
-INSERT INTO usuarios (nombre, email, rol) VALUES
-    ('Administrador', 'admin@jugueteria.com', 'admin');
+-- Usuario administrador por defecto (usuario: admin, contraseña: admin123)
+-- El hash SHA-256 de 'admin123' es '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
+INSERT INTO usuarios (nombre, username, email, password, rol) VALUES
+    ('Administrador', 'admin', 'admin@jugueteria.com', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'admin');
