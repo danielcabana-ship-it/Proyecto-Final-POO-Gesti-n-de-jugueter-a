@@ -77,6 +77,9 @@ public class VentaDAO {
         }
     }
 
+    /**
+     * Recupera el historial completo de ventas realizadas.
+     */
     public List<Venta> listarVentas() {
         List<Venta> lista = new ArrayList<>();
         String sql = "SELECT * FROM ventas";

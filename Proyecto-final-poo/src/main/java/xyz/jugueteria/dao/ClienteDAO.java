@@ -12,6 +12,11 @@ import java.util.List;
 
 public class ClienteDAO {
 
+    /**
+     * Registra un nuevo cliente en la base de datos.
+     * @param cliente Objeto cliente con los datos a insertar.
+     * @return true si se registró correctamente, false en caso de error.
+     */
     public boolean registrarCliente(Cliente cliente) {
         String sql = "INSERT INTO clientes (dni, nombre_completo, telefono, direccion) VALUES (?, ?, ?, ?)";
         try (Connection con = ConexionDB.getInstancia().getConexion();
@@ -30,6 +35,10 @@ public class ClienteDAO {
         }
     }
 
+    /**
+     * Lista todos los clientes registrados en el sistema.
+     * @return Lista de clientes.
+     */
     public List<Cliente> listarClientes() {
         List<Cliente> lista = new ArrayList<>();
         String sql = "SELECT * FROM clientes";
@@ -53,6 +62,9 @@ public class ClienteDAO {
         return lista;
     }
 
+    /**
+     * Actualiza la información de un cliente existente basado en su ID.
+     */
     public boolean actualizarCliente(Cliente cliente) {
         String sql = "UPDATE clientes SET dni = ?, nombre_completo = ?, telefono = ?, direccion = ? WHERE id_cliente = ?";
         try (Connection con = ConexionDB.getInstancia().getConexion();
@@ -72,6 +84,11 @@ public class ClienteDAO {
         }
     }
 
+    /**
+     * Elimina un cliente de la base de datos por su ID.
+     * Nota: Si el cliente tiene ventas asociadas, la BD restringirá el borrado
+     * a menos que se configure en cascada.
+     */
     public boolean eliminarCliente(int idCliente) {
         String sql = "DELETE FROM clientes WHERE id_cliente = ?";
         try (Connection con = ConexionDB.getInstancia().getConexion();
