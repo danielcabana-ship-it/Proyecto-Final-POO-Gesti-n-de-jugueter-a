@@ -1,3 +1,7 @@
-package Controlador;
+package xyz.jugueteria.controllers;
 
-import ModeloLogica.Admin.AdminDAO;
+import xyz.jugueteria.dao.AdminDAO;
+
+public class AdminController {
+    // Estructura inicial creada. La lógica se implementará en el siguiente commit.
+}
