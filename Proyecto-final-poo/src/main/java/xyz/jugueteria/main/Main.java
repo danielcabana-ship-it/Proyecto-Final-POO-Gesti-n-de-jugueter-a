@@ -1,40 +1,34 @@
 package xyz.jugueteria.main;
 
-import xyz.jugueteria.controllers.AdminController;
-import xyz.jugueteria.dao.ProductoDAO;
-import xyz.jugueteria.models.Producto;
+import com.formdev.flatlaf.FlatDarkLaf;
+import xyz.jugueteria.views.MainView;
 
+import javax.swing.*;
+
+/**
+ * Punto de entrada de la aplicación.
+ * Configura el tema visual FlatLaf (Dark) y lanza la ventana principal.
+ */
 public class Main {
+
     public static void main(String[] args) {
-        System.out.println("==========================================");
-        System.out.println("   INICIANDO SISTEMA DE JUGUETERÍA TECSUP  ");
-        System.out.println("==========================================\n");
+        configurarLookAndFeel();
 
-        // 1. Demostrar el Login (Controlador + DAO)
-        System.out.println("--- PRUEBA DE LOGIN DE ADMINISTRADOR (MVC) ---");
-        AdminController adminCtrl = new AdminController();
+        // Swing exige que toda manipulación de UI ocurra en el Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            MainView ventana = new MainView();
+            ventana.setVisible(true);
+        });
+    }
 
-        // Simulación de error
-        System.out.println("Intentando ingresar con credenciales incorrectas...");
-        boolean loginMalo = adminCtrl.validarIngreso("admin_falso", "123");
-        System.out.println("Resultado: " + (loginMalo ? "Acceso Permitido" : "Acceso Denegado (Correcto)\n"));
-
-        // Simulación de éxito (IMPORTANTE: Pon un usuario y clave que sí existan en tu BD)
-        System.out.println("Intentando ingresar con credenciales válidas...");
-        boolean loginBueno = adminCtrl.validarIngreso("root", "admin"); // <-- CAMBIA ESTOS DATOS POR LOS DE TU BD
-        System.out.println("Resultado: " + (loginBueno ? "¡Acceso Permitido! (Correcto)\n" : "Acceso Denegado\n"));
-
-        // 2. Demostrar la Base de Datos (Productos)
-        System.out.println("--- INVENTARIO DE JUGUETERÍA ---");
-        ProductoDAO prodDAO = new ProductoDAO();
-
-        System.out.println("Consultando productos en la base de datos MariaDB...\n");
-        for (Producto p : prodDAO.listarProductos()) {
-            System.out.println(" -> " + p.getNombre() + " | Precio: S/." + p.getPrecio() + " | Stock: " + p.getStock());
+    private static void configurarLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(new FlatDarkLaf());
+            UIManager.put("Button.arc", 10);
+            UIManager.put("Component.arc", 10);
+            UIManager.put("TextComponent.arc", 10);
+        } catch (UnsupportedLookAndFeelException e) {
+            System.err.println("No se pudo inicializar FlatLaf, se usará el tema por defecto.");
         }
-
-        System.out.println("\n==========================================");
-        System.out.println("      EJECUCIÓN FINALIZADA CON ÉXITO      ");
-        System.out.println("==========================================");
     }
 }

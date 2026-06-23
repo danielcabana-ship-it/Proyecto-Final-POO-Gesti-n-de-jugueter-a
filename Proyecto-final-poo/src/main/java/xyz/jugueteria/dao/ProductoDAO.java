@@ -10,9 +10,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data Access Object para la tabla 'productos'.
+ * Centraliza todas las operaciones CRUD contra la BD.
+ */
 public class ProductoDAO {
 
-    // CREATE: Método para insertar un producto en la base de datos
     public boolean registrarProducto(Producto producto) {
         String sql = "INSERT INTO productos (nombre, precio, stock, id_categoria, requiere_baterias) VALUES (?, ?, ?, ?, ?)";
         try (Connection con = ConexionDB.getInstancia().getConexion();
@@ -32,7 +35,6 @@ public class ProductoDAO {
         }
     }
 
-    // READ: Método para listar todos los productos
     public List<Producto> listarProductos() {
         List<Producto> lista = new ArrayList<>();
         String sql = "SELECT * FROM productos";
@@ -42,14 +44,7 @@ public class ProductoDAO {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                Producto p = new Producto();
-                p.setCodigo(rs.getInt("codigo"));
-                p.setNombre(rs.getString("nombre"));
-                p.setPrecio(rs.getDouble("precio"));
-                p.setStock(rs.getInt("stock"));
-                p.setIdCategoria(rs.getInt("id_categoria"));
-                p.setRequiereBaterias(rs.getBoolean("requiere_baterias"));
-                lista.add(p);
+                lista.add(mapearProducto(rs));
             }
         } catch (SQLException e) {
             System.err.println("Error al listar productos: " + e.getMessage());
@@ -57,32 +52,23 @@ public class ProductoDAO {
         return lista;
     }
 
-    // READ: Obtener un producto específico por ID
     public Producto obtenerProductoPorId(int codigo) {
         String sql = "SELECT * FROM productos WHERE codigo = ?";
-        Producto p = null;
         try (Connection con = ConexionDB.getInstancia().getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            
+
             ps.setInt(1, codigo);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    p = new Producto();
-                    p.setCodigo(rs.getInt("codigo"));
-                    p.setNombre(rs.getString("nombre"));
-                    p.setPrecio(rs.getDouble("precio"));
-                    p.setStock(rs.getInt("stock"));
-                    p.setIdCategoria(rs.getInt("id_categoria"));
-                    p.setRequiereBaterias(rs.getBoolean("requiere_baterias"));
+                    return mapearProducto(rs);
                 }
             }
         } catch (SQLException e) {
             System.err.println("Error al obtener producto: " + e.getMessage());
         }
-        return p;
+        return null;
     }
 
-    // UPDATE: Actualizar un producto existente
     public boolean actualizarProducto(Producto producto) {
         String sql = "UPDATE productos SET nombre = ?, precio = ?, stock = ?, id_categoria = ?, requiere_baterias = ? WHERE codigo = ?";
         try (Connection con = ConexionDB.getInstancia().getConexion();
@@ -103,12 +89,11 @@ public class ProductoDAO {
         }
     }
 
-    // DELETE: Eliminar un producto
     public boolean eliminarProducto(int codigo) {
         String sql = "DELETE FROM productos WHERE codigo = ?";
         try (Connection con = ConexionDB.getInstancia().getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            
+
             ps.setInt(1, codigo);
             ps.executeUpdate();
             return true;
@@ -116,5 +101,20 @@ public class ProductoDAO {
             System.err.println("Error al eliminar producto: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Extrae los campos de un ResultSet y los mapea a un objeto Producto.
+     * Método privado DRY para evitar repetir el mismo bloque en cada consulta.
+     */
+    private Producto mapearProducto(ResultSet rs) throws SQLException {
+        Producto p = new Producto();
+        p.setCodigo(rs.getInt("codigo"));
+        p.setNombre(rs.getString("nombre"));
+        p.setPrecio(rs.getDouble("precio"));
+        p.setStock(rs.getInt("stock"));
+        p.setIdCategoria(rs.getInt("id_categoria"));
+        p.setRequiereBaterias(rs.getBoolean("requiere_baterias"));
+        return p;
     }
 }
