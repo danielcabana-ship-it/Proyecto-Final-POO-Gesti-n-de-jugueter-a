@@ -10,6 +10,10 @@ import java.util.List;
 
 /**
  * Data Access Object para las tablas 'ventas' y 'detalle_ventas'.
+ *
+ * CORRECCIÓN: registrarVentaCompleta() ahora abre una conexión propia,
+ * maneja la transacción sobre esa conexión local, y la cierra en el finally.
+ * Ya no depende del Singleton roto.
  */
 public class VentaDAO {
 
@@ -18,34 +22,49 @@ public class VentaDAO {
      * Si algún paso falla se hace rollback completo para evitar datos huérfanos.
      */
     public boolean registrarVentaCompleta(Venta venta, List<DetalleVenta> detalles) {
-        String sqlVenta = "INSERT INTO ventas (id_cliente, total) VALUES (?, ?)";
+        String sqlVenta   = "INSERT INTO ventas (id_cliente, total) VALUES (?, ?)";
         String sqlDetalle = "INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";
-        String sqlStock = "UPDATE productos SET stock = stock - ? WHERE codigo = ?";
+        String sqlStock   = "UPDATE productos SET stock = stock - ? WHERE codigo = ?";
 
         Connection con = null;
         try {
-            con = ConexionDB.getInstancia().getConexion();
-            con.setAutoCommit(false);
+            con = ConexionDB.getConexion();
+            if (con == null) {
+                System.err.println("[VentaDAO] No se pudo obtener conexión.");
+                return false;
+            }
+            con.setAutoCommit(false); // Inicio de transacción
 
+            // Paso 1: Insertar cabecera de la venta y obtener el ID generado
             int idVentaGenerado = insertarCabecera(con, sqlVenta, venta);
+            if (idVentaGenerado == 0) {
+                throw new SQLException("No se generó un ID de venta válido.");
+            }
+
+            // Paso 2: Insertar detalles y descontar stock
             insertarDetallesYActualizarStock(con, sqlDetalle, sqlStock, detalles, idVentaGenerado);
 
-            con.commit();
+            con.commit(); // Confirmar todo
+            System.out.println("[VentaDAO] Venta registrada exitosamente. ID: " + idVentaGenerado);
             return true;
+
         } catch (SQLException e) {
+            System.err.println("[VentaDAO] Error en transacción, haciendo rollback: " + e.getMessage());
+            e.printStackTrace();
             rollbackSilencioso(con);
-            System.err.println("Error al registrar venta: " + e.getMessage());
             return false;
         } finally {
-            restaurarAutoCommit(con);
+            // Cerrar la conexión de transacción manualmente (no usamos try-with-resources aquí
+            // porque necesitamos controlar el commit/rollback primero)
+            cerrarConexion(con);
         }
     }
 
     public List<Venta> listarVentas() {
         List<Venta> lista = new ArrayList<>();
-        String sql = "SELECT * FROM ventas";
+        String sql = "SELECT * FROM ventas ORDER BY id_venta DESC";
 
-        try (Connection con = ConexionDB.getInstancia().getConexion();
+        try (Connection con = ConexionDB.getConexion();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -57,13 +76,16 @@ public class VentaDAO {
                 v.setTotal(rs.getDouble("total"));
                 lista.add(v);
             }
+            System.out.println("[VentaDAO] Ventas cargadas: " + lista.size());
+
         } catch (SQLException e) {
-            System.err.println("Error al listar ventas: " + e.getMessage());
+            System.err.println("[VentaDAO] Error al listar ventas: " + e.getMessage());
+            e.printStackTrace();
         }
         return lista;
     }
 
-    // --- Métodos auxiliares privados para mantener registrarVentaCompleta() legible ---
+    // --- Métodos auxiliares privados ---
 
     private int insertarCabecera(Connection con, String sql, Venta venta) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -81,7 +103,7 @@ public class VentaDAO {
     private void insertarDetallesYActualizarStock(Connection con, String sqlDetalle, String sqlStock,
                                                    List<DetalleVenta> detalles, int idVenta) throws SQLException {
         try (PreparedStatement psDetalle = con.prepareStatement(sqlDetalle);
-             PreparedStatement psStock = con.prepareStatement(sqlStock)) {
+             PreparedStatement psStock   = con.prepareStatement(sqlStock)) {
 
             for (DetalleVenta d : detalles) {
                 psDetalle.setInt(1, idVenta);
@@ -102,7 +124,7 @@ public class VentaDAO {
         try { if (con != null) con.rollback(); } catch (SQLException ignored) {}
     }
 
-    private void restaurarAutoCommit(Connection con) {
-        try { if (con != null) con.setAutoCommit(true); } catch (SQLException ignored) {}
+    private void cerrarConexion(Connection con) {
+        try { if (con != null) con.close(); } catch (SQLException ignored) {}
     }
 }

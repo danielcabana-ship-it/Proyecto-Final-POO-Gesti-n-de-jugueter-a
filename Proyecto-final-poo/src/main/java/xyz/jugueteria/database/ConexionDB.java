@@ -8,78 +8,70 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * ¡Ojo aquí! Este es el Singleton que nos conecta a MariaDB.
- * Solo lo instanciamos una vez al arrancar la app para no reventar la base de datos
- * abriendo y cerrando conexiones a cada rato.
+ * Proveedor de conexiones a MariaDB.
+ *
+ * CORRECCIÓN APLICADA:
+ * El error anterior era que se guardaba UNA SOLA instancia de Connection.
+ * Los DAOs usan try-with-resources que CIERRA automáticamente esa conexión
+ * al salir del bloque, dejando a todos los demás métodos con una conexión
+ * muerta y lanzando "Connection is closed".
+ *
+ * La solución: getConexion() ahora abre SIEMPRE una conexión nueva y fresca.
+ * Para una app de escritorio con un solo usuario, esto es limpio y correcto.
+ * Cada DAO abre la suya, la usa y la cierra sola via try-with-resources.
  */
 public class ConexionDB {
 
-    private static ConexionDB instancia;
-    private Connection conexion;
     private static final Properties configuracion = new Properties();
 
     static {
-        // Bloque estático que carga el config.properties apenas arranca esto.
-        // Si no encuentra el archivo, avisamos por consola porque seguro alguien borró el archivo sin querer.
-        try (InputStream input = ConexionDB.class.getClassLoader().getResourceAsStream("config.properties")) {
+        // Cargamos el config.properties una sola vez al arrancar la clase.
+        try (InputStream input = ConexionDB.class.getClassLoader()
+                .getResourceAsStream("config.properties")) {
             if (input == null) {
-                System.err.println("[ConexionDB] ¡Problema serio! No se encontró 'config.properties' en resources.");
+                System.err.println("[ConexionDB] ERROR: No se encontró 'config.properties' en resources.");
             } else {
                 configuracion.load(input);
+                System.out.println("[ConexionDB] Configuración cargada correctamente.");
             }
         } catch (IOException e) {
-            System.err.println("[ConexionDB] Falló la lectura de 'config.properties'. Revisa que no esté corrupto.");
+            System.err.println("[ConexionDB] ERROR: Falló la lectura de 'config.properties'.");
             e.printStackTrace();
         }
     }
 
-    private ConexionDB() {
+    // Constructor privado: esta clase solo se usa como fábrica estática de conexiones.
+    private ConexionDB() {}
+
+    /**
+     * Abre y devuelve una conexión nueva a la base de datos.
+     * El llamador es responsable de cerrarla (idealmente con try-with-resources).
+     *
+     * @return una Connection fresca lista para usar, o null si falla.
+     */
+    public static Connection getConexion() {
         try {
-            // Traemos las credenciales. Si alguna viene nula, abortamos misión porque no podemos adivinar la clave.
-            String url = configuracion.getProperty("db.url");
-            String user = configuracion.getProperty("db.user");
+            String url      = configuracion.getProperty("db.url");
+            String user     = configuracion.getProperty("db.user");
             String password = configuracion.getProperty("db.password");
 
             if (url == null || user == null || password == null) {
-                System.err.println("[ConexionDB] Te faltan credenciales en 'config.properties', llena los datos porfa.");
-                return;
+                System.err.println("[ConexionDB] ERROR: Faltan credenciales en 'config.properties'.");
+                return null;
             }
 
-            // Levantamos el driver y establecemos la conexión real.
             Class.forName("org.mariadb.jdbc.Driver");
-            conexion = DriverManager.getConnection(url, user, password);
-            System.out.println("[ConexionDB] ¡Listo! Nos conectamos a la BD sin problemas.");
+            Connection con = DriverManager.getConnection(url, user, password);
+            System.out.println("[ConexionDB] Conexión abierta OK.");
+            return con;
+
         } catch (ClassNotFoundException e) {
-            System.err.println("[ConexionDB] Driver MariaDB no encontrado. Verifica pom.xml.");
+            System.err.println("[ConexionDB] ERROR: Driver MariaDB no encontrado. Revisa pom.xml.");
             e.printStackTrace();
         } catch (SQLException e) {
-            System.err.println("[ConexionDB] Error SQL al conectar.");
+            System.err.println("[ConexionDB] ERROR SQL al conectar: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    public static synchronized ConexionDB getInstancia() {
-        if (instancia == null) {
-            instancia = new ConexionDB();
-        }
-        return instancia;
-    }
-
-    public Connection getConexion() {
-        return conexion;
-    }
-
-    public void cerrarConexion() {
-        try {
-            if (conexion != null && !conexion.isClosed()) {
-                conexion.close();
-                System.out.println("[ConexionDB] Conexión cerrada.");
-            }
-        } catch (SQLException e) {
-            System.err.println("[ConexionDB] Error al cerrar conexión.");
-            e.printStackTrace();
-        } finally {
-            instancia = null;
-        }
+        return null;
     }
 }
