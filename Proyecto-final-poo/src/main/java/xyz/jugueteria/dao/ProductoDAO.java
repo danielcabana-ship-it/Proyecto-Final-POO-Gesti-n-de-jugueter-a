@@ -11,8 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data Access Object para la tabla 'productos'.
- * Centraliza todas las operaciones CRUD contra la BD.
+ * Este es el Data Access Object (DAO) para la tabla 'productos'.
+ * Piensa en él como nuestro puente hacia la base de datos para todo lo relacionado con productos: 
+ * guardar, buscar, editar y borrar. Centralizamos todo aquí para no ensuciar otras partes del código.
  */
 public class ProductoDAO {
 
@@ -27,7 +28,7 @@ public class ProductoDAO {
             ps.setInt(4, producto.getIdCategoria());
             ps.setBoolean(5, producto.isRequiereBaterias());
 
-            ps.executeUpdate();
+            ps.executeUpdate(); // Mandamos la orden a la base de datos
             return true;
         } catch (SQLException e) {
             System.err.println("Error al registrar producto: " + e.getMessage());
@@ -104,8 +105,9 @@ public class ProductoDAO {
     }
 
     /**
-     * Extrae los campos de un ResultSet y los mapea a un objeto Producto.
-     * Método privado DRY para evitar repetir el mismo bloque en cada consulta.
+     * Esto extrae los campos crudos del ResultSet (la respuesta de la BD) y los convierte 
+     * en un objeto Producto de Java bien armadito.
+     * Es un método privado DRY, así no andamos repitiendo este bloque asqueroso en cada consulta.
      */
     private Producto mapearProducto(ResultSet rs) throws SQLException {
         Producto p = new Producto();

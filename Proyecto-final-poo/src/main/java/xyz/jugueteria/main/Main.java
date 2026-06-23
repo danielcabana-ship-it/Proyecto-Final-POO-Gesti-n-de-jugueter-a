@@ -6,18 +6,20 @@ import xyz.jugueteria.views.MainView;
 import javax.swing.*;
 
 /**
- * Punto de entrada de la aplicación.
- * Configura el tema visual FlatLaf (Dark) y lanza la ventana principal.
+ * Este es el punto de entrada de la aplicación. 
+ * Básicamente es lo primero que se ejecuta. Aquí le ponemos el traje oscuro (FlatDarkLaf) 
+ * y llamamos a la ventana principal para que arranque el show.
  */
 public class Main {
 
     public static void main(String[] args) {
         configurarLookAndFeel();
 
-        // Swing exige que toda manipulación de UI ocurra en el Event Dispatch Thread
+        // Swing es medio delicado, así que exige que toda la manipulación de la interfaz
+        // ocurra en el Event Dispatch Thread (un hilo especial para UI). Por eso usamos invokeLater.
         SwingUtilities.invokeLater(() -> {
             MainView ventana = new MainView();
-            ventana.setVisible(true);
+            ventana.setVisible(true); // ¡Y se hizo la luz!
         });
     }
 
@@ -28,7 +30,8 @@ public class Main {
             UIManager.put("Component.arc", 10);
             UIManager.put("TextComponent.arc", 10);
         } catch (UnsupportedLookAndFeelException e) {
-            System.err.println("No se pudo inicializar FlatLaf, se usará el tema por defecto.");
+            // Si por alguna razón el tema falla (que no debería), avisamos y Swing usará el feo por defecto.
+            System.err.println("Uy, no se pudo inicializar FlatLaf. Se verá un poco retro con el tema por defecto.");
         }
     }
 }
