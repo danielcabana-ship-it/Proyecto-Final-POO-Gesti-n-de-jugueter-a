@@ -199,4 +199,136 @@ public class LoginView extends JFrame {
         pnl.add(txtRegUsuario, gbc);
 
         // Campo: Correo Electrónico
-        gbc.gridx
+        gbc.gridx = 0; gbc.gridy = 3; // Columna 0, Fila 3
+        pnl.add(crearLabelRegistro("Correo Electrónico:"), gbc);
+        JTextField txtEmail = crearTextFieldRegistro();
+        gbc.gridx = 1; // Columna 1, Fila 3
+        pnl.add(txtEmail, gbc);
+
+        // Campo: Contraseña
+        gbc.gridx = 0; gbc.gridy = 4;
+        pnl.add(crearLabelRegistro("Contraseña:"), gbc);
+        JPasswordField txtRegPassword = crearPasswordFieldRegistro();
+        gbc.gridx = 1;
+        pnl.add(txtRegPassword, gbc);
+
+        // Campo: Rol de Usuario (lista desplegable)
+        gbc.gridx = 0; gbc.gridy = 5;
+        pnl.add(crearLabelRegistro("Rol de Usuario:"), gbc);
+        String[] roles = {"vendedor", "admin", "auditor"};
+        JComboBox<String> cbRol = new JComboBox<>(roles);
+        cbRol.setPreferredSize(new Dimension(200, 35));
+        cbRol.setBackground(new Color(40, 42, 54));
+        cbRol.setForeground(Color.WHITE);
+        gbc.gridx = 1;
+        pnl.add(cbRol, gbc);
+
+        // Botones de acción del formulario de registro
+        JPanel pnlBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        pnlBotones.setOpaque(false); // Fondo transparente para que no tape el diseño oscuro
+
+        // Botón Cancelar: cierra el diálogo sin guardar nada
+        JButton btnCancelar = new JButton("Cancelar");
+        btnCancelar.setBackground(new Color(70, 70, 70));
+        btnCancelar.setForeground(Color.WHITE);
+        btnCancelar.setFocusPainted(false);
+        btnCancelar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnCancelar.setPreferredSize(new Dimension(100, 35));
+        btnCancelar.addActionListener(e -> dlg.dispose()); // Al hacer clic, cierra el diálogo
+
+        // Botón Registrar: valida y guarda el nuevo usuario en la base de datos
+        JButton btnGuardar = new JButton("Registrar");
+        btnGuardar.setBackground(new Color(0, 122, 255)); // Azul vibrante
+        btnGuardar.setForeground(Color.WHITE);
+        btnGuardar.setFocusPainted(false);
+        btnGuardar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnGuardar.setPreferredSize(new Dimension(120, 35));
+
+        pnlBotones.add(btnCancelar);
+        pnlBotones.add(btnGuardar);
+
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2; // Los botones ocupan las dos columnas
+        gbc.insets = new Insets(20, 8, 8, 8); // Espacio extra arriba para separar de los campos
+        pnl.add(pnlBotones, gbc);
+
+        // Lógica de registro: validar campos y guardar en la BD
+        btnGuardar.addActionListener(ev -> {
+            String nombre = txtNombre.getText().trim();
+            String username = txtRegUsuario.getText().trim();
+            String email = txtEmail.getText().trim();
+            String password = new String(txtRegPassword.getPassword()).trim();
+            String rol = (String) cbRol.getSelectedItem();
+
+            // Verificamos que ningún campo esté vacío antes de continuar
+            if (nombre.isEmpty() || username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(dlg, "Por favor, completa todos los campos.", "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            xyz.jugueteria.dao.UsuarioDAO usuarioDAO = new xyz.jugueteria.dao.UsuarioDAO();
+
+            // Validamos que el nombre de usuario no esté ya registrado
+            if (usuarioDAO.usernameExiste(username)) {
+                JOptionPane.showMessageDialog(dlg, "El nombre de usuario ya está registrado.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            // Validamos que el correo no esté ya registrado
+            if (usuarioDAO.emailExiste(email)) {
+                JOptionPane.showMessageDialog(dlg, "El correo electrónico ya está registrado.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Creamos el objeto Usuario con los datos del formulario y lo registramos
+            xyz.jugueteria.models.Usuario nuevoUsuario = new xyz.jugueteria.models.Usuario(0, nombre, username, email, password, rol);
+            if (usuarioDAO.registrarUsuario(nuevoUsuario)) {
+                JOptionPane.showMessageDialog(this, "¡Usuario creado correctamente! Ya puedes iniciar sesión.", "Registro Exitoso", JOptionPane.INFORMATION_MESSAGE);
+                dlg.dispose(); // Cerramos el diálogo de registro
+            } else {
+                JOptionPane.showMessageDialog(dlg, "Error al crear el usuario. Inténtalo de nuevo.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        dlg.add(pnl); // Agregamos el panel completo al diálogo
+        dlg.setVisible(true); // Mostramos el diálogo en pantalla
+    }
+
+    // Crea etiquetas con estilo gris claro para el formulario de registro
+    private JLabel crearLabelRegistro(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setForeground(new Color(200, 200, 200)); // Gris claro elegante
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        return lbl;
+    }
+
+    // Crea campos de texto oscuros para el formulario de registro
+    private JTextField crearTextFieldRegistro() {
+        JTextField txt = new JTextField();
+        txt.setPreferredSize(new Dimension(200, 35));
+        txt.setBackground(new Color(40, 42, 54)); // Fondo oscuro
+        txt.setForeground(Color.WHITE);            // Letra blanca
+        txt.setCaretColor(Color.WHITE);            // Cursor blanco
+        txt.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        return txt;
+    }
+
+    // Crea campos de contraseña oscuros para el formulario de registro
+    private JPasswordField crearPasswordFieldRegistro() {
+        JPasswordField txt = new JPasswordField();
+        txt.setPreferredSize(new Dimension(200, 35));
+        txt.setBackground(new Color(40, 42, 54));
+        txt.setForeground(Color.WHITE);
+        txt.setCaretColor(Color.WHITE);
+        txt.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        return txt;
+    }
+
+    // Crea etiquetas estilizadas con texto gris y alineación centrada para el formulario de login
+    private JLabel crearLabelConEstilo(String texto) {
+        JLabel label = new JLabel(texto);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        label.setForeground(new Color(100, 100, 100)); // Gris suave
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setMaximumSize(new Dimension(300, 20));
+        return label;
+    }
+}

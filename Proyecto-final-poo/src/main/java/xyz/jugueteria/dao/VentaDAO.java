@@ -166,4 +166,8 @@ public class VentaDAO {
         try { if (con != null) con.rollback(); } catch (SQLException ignored) {}
     }
 
-// Un cerraj
+    // Un cerrajero silencioso: cierra la conexión sin arrojar más excepciones si ya falló
+    private void cerrarConexion(Connection con) {
+        try { if (con != null) con.close(); } catch (SQLException ignored) {}
+    }
+}
