@@ -7,7 +7,7 @@ services:
       MARIADB_DATABASE: proyecto_finall_poo
       MARIADB_ROOT_PASSWORD: root
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./src/main/resources/dump-proyecto_finall_poo-202606301300.sql:/docker-entrypoint-initdb.d/init.sql

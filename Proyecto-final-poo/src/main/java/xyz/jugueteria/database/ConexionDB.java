@@ -57,43 +57,35 @@ public class ConexionDB {
      * Abre y devuelve una conexión nueva a la base de datos.
      * El llamador es responsable de cerrarla (idealmente con try-with-resources).
      *
-     * @return una Connection fresca lista para usar, o null si falla.
+     * @return una Connection fresca lista para usar.
+     * @throws SQLException si ocurre un error al conectar o no se encuentran las credenciales.
      */
-    public static Connection getConexion() {
+    public static Connection getConexion() throws SQLException {
+        // Extraemos los datos que guardamos del archivo .properties usando sus nombres clave
+        String url      = configuracion.getProperty("db.url");      // La dirección de la base de datos
+        String user     = configuracion.getProperty("db.user");     // El usuario de acceso
+        String password = configuracion.getProperty("db.password"); // La contraseña de acceso
+
+        // Si falta alguno de los tres datos esenciales, cancelamos la operación por seguridad
+        if (url == null || user == null || password == null) {
+            throw new SQLException("Faltan credenciales en 'config.properties'.");
+        }
+
         try {
-            // Extraemos los datos que guardamos del archivo .properties usando sus nombres clave
-            String url      = configuracion.getProperty("db.url");      // La dirección de la base de datos
-            String user     = configuracion.getProperty("db.user");     // El usuario de acceso
-            String password = configuracion.getProperty("db.password"); // La contraseña de acceso
-
-            // Si falta alguno de los tres datos esenciales, cancelamos la operación por seguridad
-            if (url == null || user == null || password == null) {
-                System.err.println("[ConexionDB] ERROR: Faltan credenciales en 'config.properties'.");
-                return null; // Devolvemos null porque no sabemos a dónde o cómo conectar
-            }
-
             // Le avisamos a Java qué "traductor" (Driver) debe usar para comunicarse con MariaDB
             Class.forName("org.mariadb.jdbc.Driver");
-
-            // Le pedimos al administrador de drivers que abra un puente físico (conexión) usando los datos extraídos
-            Connection con = DriverManager.getConnection(url, user, password);
-
-            // Ponemos un mensaje alegre en consola avisando que la conexión se abrió sin problemas
-            System.out.println("[ConexionDB] Conexión abierta OK.");
-
-            // Devolvemos el puente de conexión listo para que cualquier DAO haga sus consultas SQL
-            return con;
-
         } catch (ClassNotFoundException e) {
-            // Este error salta si olvidaste agregar la librería de MariaDB al proyecto (el conector)
             System.err.println("[ConexionDB] ERROR: Driver MariaDB no encontrado. Revisa pom.xml.");
-            e.printStackTrace();
-        } catch (SQLException e) {
-            // Este error salta si los datos de conexión están mal (contraseña incorrecta, base de datos apagada, etc.)
-            System.err.println("[ConexionDB] ERROR SQL al conectar: " + e.getMessage());
-            e.printStackTrace();
+            throw new SQLException("Driver MariaDB no encontrado", e);
         }
-        // Si caímos en un error, devolvemos null para indicar que la conexión falló
-        return null;
+
+        // Le pedimos al administrador de drivers que abra un puente físico (conexión) usando los datos extraídos
+        Connection con = DriverManager.getConnection(url, user, password);
+
+        // Ponemos un mensaje alegre en consola avisando que la conexión se abrió sin problemas
+        System.out.println("[ConexionDB] Conexión abierta OK.");
+
+        // Devolvemos el puente de conexión listo para que cualquier DAO haga sus consultas SQL
+        return con;
     }
 }
