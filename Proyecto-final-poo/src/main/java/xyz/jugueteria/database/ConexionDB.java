@@ -1,7 +1,9 @@
 package xyz.jugueteria.database;
 
+// Importamos las herramientas para leer archivos de texto externos (.properties)
 import java.io.IOException;
 import java.io.InputStream;
+// Importamos los componentes de Java necesarios para fabricar y gestionar la conexión física a la base de datos
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -22,25 +24,33 @@ import java.util.Properties;
  */
 public class ConexionDB {
 
+    // Creamos una "cajita" estática para guardar los datos de configuración (URL, usuario, contraseña)
     private static final Properties configuracion = new Properties();
 
+    // Bloque estático: Se ejecuta automáticamente UNA SOLA VEZ cuando el programa arranca y usa esta clase
     static {
-        // Cargamos el config.properties una sola vez al arrancar la clase.
+        // Intentamos buscar y abrir el archivo 'config.properties' que está guardado en la carpeta de recursos (resources)
         try (InputStream input = ConexionDB.class.getClassLoader()
                 .getResourceAsStream("config.properties")) {
+
+            // Si el archivo no existe o no se encuentra en su lugar, avisamos del error
             if (input == null) {
                 System.err.println("[ConexionDB] ERROR: No se encontró 'config.properties' en resources.");
             } else {
+                // Si todo está bien, cargamos los datos del archivo dentro de nuestra variable 'configuracion'
                 configuracion.load(input);
+                // Confirmamos en consola que ya leímos las credenciales con éxito
                 System.out.println("[ConexionDB] Configuración cargada correctamente.");
             }
         } catch (IOException e) {
+            // Si el archivo está corrupto o no se puede leer, capturamos el error de lectura
             System.err.println("[ConexionDB] ERROR: Falló la lectura de 'config.properties'.");
-            e.printStackTrace();
+            e.printStackTrace(); // Muestra el reporte de fallas detallado
         }
     }
 
-    // Constructor privado: esta clase solo se usa como fábrica estática de conexiones.
+    // Al hacer el constructor privado, evitamos que alguien intente hacer un "new ConexionDB()" desde fuera.
+    // Esta clase solo sirve para llamarla directamente como: ConexionDB.getConexion()
     private ConexionDB() {}
 
     /**
@@ -51,27 +61,39 @@ public class ConexionDB {
      */
     public static Connection getConexion() {
         try {
-            String url      = configuracion.getProperty("db.url");
-            String user     = configuracion.getProperty("db.user");
-            String password = configuracion.getProperty("db.password");
+            // Extraemos los datos que guardamos del archivo .properties usando sus nombres clave
+            String url      = configuracion.getProperty("db.url");      // La dirección de la base de datos
+            String user     = configuracion.getProperty("db.user");     // El usuario de acceso
+            String password = configuracion.getProperty("db.password"); // La contraseña de acceso
 
+            // Si falta alguno de los tres datos esenciales, cancelamos la operación por seguridad
             if (url == null || user == null || password == null) {
                 System.err.println("[ConexionDB] ERROR: Faltan credenciales en 'config.properties'.");
-                return null;
+                return null; // Devolvemos null porque no sabemos a dónde o cómo conectar
             }
 
+            // Le avisamos a Java qué "traductor" (Driver) debe usar para comunicarse con MariaDB
             Class.forName("org.mariadb.jdbc.Driver");
+
+            // Le pedimos al administrador de drivers que abra un puente físico (conexión) usando los datos extraídos
             Connection con = DriverManager.getConnection(url, user, password);
+
+            // Ponemos un mensaje alegre en consola avisando que la conexión se abrió sin problemas
             System.out.println("[ConexionDB] Conexión abierta OK.");
+
+            // Devolvemos el puente de conexión listo para que cualquier DAO haga sus consultas SQL
             return con;
 
         } catch (ClassNotFoundException e) {
+            // Este error salta si olvidaste agregar la librería de MariaDB al proyecto (el conector)
             System.err.println("[ConexionDB] ERROR: Driver MariaDB no encontrado. Revisa pom.xml.");
             e.printStackTrace();
         } catch (SQLException e) {
+            // Este error salta si los datos de conexión están mal (contraseña incorrecta, base de datos apagada, etc.)
             System.err.println("[ConexionDB] ERROR SQL al conectar: " + e.getMessage());
             e.printStackTrace();
         }
+        // Si caímos en un error, devolvemos null para indicar que la conexión falló
         return null;
     }
 }
